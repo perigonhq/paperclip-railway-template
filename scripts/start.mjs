@@ -25,11 +25,11 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const PUBLIC_PORT    = parseInt(process.env.PORT || "3100", 10);
+const PUBLIC_PORT = parseInt(process.env.PORT || "3100", 10);
 const PAPERCLIP_PORT = 3099;
-const HOME           = process.env.PAPERCLIP_HOME || "/paperclip";
-const CONFIG_PATH    = join(HOME, "config.json");
-const INVITE_FILE    = join(HOME, "bootstrap-invite.txt");
+const HOME = process.env.PAPERCLIP_HOME || "/paperclip";
+const CONFIG_PATH = join(HOME, "config.json");
+const INVITE_FILE = join(HOME, "bootstrap-invite.txt");
 
 // Strip ANSI escape sequences (colors, cursor, etc.) from strings
 function stripAnsi(str) {
@@ -38,9 +38,9 @@ function stripAnsi(str) {
 
 // ── Global state ─────────────────────────────────────────────────────────────
 
-let paperclipProc  = null;   // child_process handle
+let paperclipProc = null;   // child_process handle
 let paperclipReady = false;  // true once server says it's listening
-let inviteUrl      = null;   // bootstrap CEO invite URL
+let inviteUrl = null;   // bootstrap CEO invite URL
 
 // ── Ready check (derived from reality, no flags) ─────────────────────────────
 
@@ -63,7 +63,7 @@ function allEnvVarsSet() {
 
 function writeConfig() {
   mkdirSync(HOME, { recursive: true });
-  mkdirSync(join(HOME, "logs"),    { recursive: true });
+  mkdirSync(join(HOME, "logs"), { recursive: true });
   mkdirSync(join(HOME, "storage"), { recursive: true });
 
   const config = {
@@ -82,7 +82,7 @@ function writeConfig() {
       logDir: join(HOME, "logs"),
     },
     server: {
-      deploymentMode:   process.env.PAPERCLIP_DEPLOYMENT_MODE  || "authenticated",
+      deploymentMode: process.env.PAPERCLIP_DEPLOYMENT_MODE || "authenticated",
       deploymentExposure: process.env.PAPERCLIP_DEPLOYMENT_EXPOSURE || "public",
       allowedHostnames: (process.env.PAPERCLIP_ALLOWED_HOSTNAMES || "")
         .split(",").map(h => h.trim()).filter(Boolean),
@@ -90,12 +90,12 @@ function writeConfig() {
       host: "127.0.0.1",
     },
     auth: {
-      baseUrlMode:    "explicit",
-      publicBaseUrl:  process.env.PAPERCLIP_PUBLIC_URL || "",
-      disableSignUp:  process.env.PAPERCLIP_AUTH_DISABLE_SIGN_UP === "true",
+      baseUrlMode: "explicit",
+      publicBaseUrl: process.env.PAPERCLIP_PUBLIC_URL || "",
+      disableSignUp: process.env.PAPERCLIP_AUTH_DISABLE_SIGN_UP === "true",
     },
     storage: {
-      provider:      "local_disk",
+      provider: "local_disk",
       localDiskPath: join(HOME, "storage"),
     },
     secrets: {
@@ -129,10 +129,10 @@ function startPaperclip() {
       env: {
         ...process.env,
         PAPERCLIP_CONFIG: CONFIG_PATH,
-        PAPERCLIP_HOME:   HOME,
-        PORT:             String(PAPERCLIP_PORT),
-        HOST:             "127.0.0.1",
-        NODE_ENV:         process.env.NODE_ENV || "production",
+        PAPERCLIP_HOME: HOME,
+        PORT: String(PAPERCLIP_PORT),
+        HOST: "127.0.0.1",
+        NODE_ENV: process.env.NODE_ENV || "production",
       },
     }
   );
@@ -161,7 +161,7 @@ function startPaperclip() {
 
   paperclipProc.on("error", err => {
     console.error("Paperclip process error:", err);
-    paperclipProc  = null;
+    paperclipProc = null;
     paperclipReady = false;
   });
 
@@ -206,10 +206,15 @@ function proxy(req, res) {
 
   const opts = {
     hostname: "127.0.0.1",
-    port:     PAPERCLIP_PORT,
-    path:     req.url,
-    method:   req.method,
-    headers:  { ...req.headers, host: `localhost:${PAPERCLIP_PORT}` },
+    port: PAPERCLIP_PORT,
+    path: req.url,
+    method: req.method,
+    headers: {
+      ...req.headers,
+      "x-forwarded-host": req.headers.host,
+      "x-forwarded-proto": "https",
+      "x-forwarded-for": req.socket.remoteAddress,
+    },
   };
 
   const upstream = httpRequest(opts, (upRes) => {
@@ -229,18 +234,18 @@ function proxy(req, res) {
 
 function envVarStatus() {
   const all = [
-    { key: "DATABASE_URL",                required: true,  label: "Database URL",         example: "postgresql://user:pass@host:5432/db" },
-    { key: "BETTER_AUTH_SECRET",          required: true,  label: "Auth Secret",          example: "${{secret(32)}} — use Railway generator" },
-    { key: "PAPERCLIP_PUBLIC_URL",        required: true,  label: "Public URL",           example: "https://your-app.up.railway.app" },
-    { key: "PAPERCLIP_ALLOWED_HOSTNAMES", required: true,  label: "Allowed Hostnames",    example: "your-app.up.railway.app" },
-    { key: "PAPERCLIP_DEPLOYMENT_MODE",   required: false, label: "Deployment Mode",      example: "authenticated" },
-    { key: "PAPERCLIP_HOME",              required: false, label: "Paperclip Home",       example: "/paperclip" },
-    { key: "ANTHROPIC_API_KEY",           required: false, label: "Anthropic API Key",    example: "sk-ant-..." },
-    { key: "OPENAI_API_KEY",              required: false, label: "OpenAI API Key",       example: "sk-..." },
+    { key: "DATABASE_URL", required: true, label: "Database URL", example: "postgresql://user:pass@host:5432/db" },
+    { key: "BETTER_AUTH_SECRET", required: true, label: "Auth Secret", example: "${{secret(32)}} — use Railway generator" },
+    { key: "PAPERCLIP_PUBLIC_URL", required: true, label: "Public URL", example: "https://your-app.up.railway.app" },
+    { key: "PAPERCLIP_ALLOWED_HOSTNAMES", required: true, label: "Allowed Hostnames", example: "your-app.up.railway.app" },
+    { key: "PAPERCLIP_DEPLOYMENT_MODE", required: false, label: "Deployment Mode", example: "authenticated" },
+    { key: "PAPERCLIP_HOME", required: false, label: "Paperclip Home", example: "/paperclip" },
+    { key: "ANTHROPIC_API_KEY", required: false, label: "Anthropic API Key", example: "sk-ant-..." },
+    { key: "OPENAI_API_KEY", required: false, label: "OpenAI API Key", example: "sk-..." },
   ];
   return all.map(v => ({
     ...v,
-    set:     !!process.env[v.key],
+    set: !!process.env[v.key],
     missing: v.required && !process.env[v.key],
   }));
 }
@@ -249,27 +254,27 @@ function envVarStatus() {
 
 function startServer() {
   const server = createServer((req, res) => {
-    const url    = new URL(req.url, "http://localhost");
-    const path   = url.pathname;
+    const url = new URL(req.url, "http://localhost");
+    const path = url.pathname;
     const method = req.method;
-    const ready  = isReady();
+    const ready = isReady();
 
     // ── Setup API routes (always available) ──────────────────────────────────
 
     if (path === "/setup/status" && method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({
-        vars:           envVarStatus(),
-        configExists:   existsSync(CONFIG_PATH),
+        vars: envVarStatus(),
+        configExists: existsSync(CONFIG_PATH),
         paperclipReady: paperclipReady,
-        ready:          ready,
+        ready: ready,
       }));
       return;
     }
 
     if (path === "/setup/invite" && method === "GET") {
       if (!inviteUrl && existsSync(INVITE_FILE)) {
-        try { inviteUrl = stripAnsi(readFileSync(INVITE_FILE, "utf8")).trim(); } catch(_) {}
+        try { inviteUrl = stripAnsi(readFileSync(INVITE_FILE, "utf8")).trim(); } catch (_) { }
       }
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ url: inviteUrl, paperclipReady }));
