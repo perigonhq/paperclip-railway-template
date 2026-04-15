@@ -108,11 +108,38 @@ function writeConfig() {
     },
   };
 
+  // Adapter configuration — prefer Anthropic/Claude, fall back to OpenAI/Codex
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const openaiKey    = process.env.OPENAI_API_KEY;
+
+  if (anthropicKey) {
+    config.adapters = {
+      default: "claude",
+      claude: {
+        type: "claude-code",
+        apiKey: anthropicKey,
+      },
+    };
+    console.log("   Adapter: Claude (Anthropic) — ANTHROPIC_API_KEY detected");
+  } else if (openaiKey) {
+    config.adapters = {
+      default: "codex",
+      codex: {
+        type: "codex",
+        apiKey: openaiKey,
+      },
+    };
+    console.log("   Adapter: Codex (OpenAI) — OPENAI_API_KEY detected");
+  } else {
+    console.log("   Adapter: none configured — set ANTHROPIC_API_KEY or OPENAI_API_KEY");
+  }
+
   // Always overwrite — keeps config in sync with env vars on every boot
   if (existsSync(CONFIG_PATH)) unlinkSync(CONFIG_PATH);
   writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
   console.log(`   Config written to ${CONFIG_PATH}`);
 }
+
 
 // ── Paperclip process ─────────────────────────────────────────────────────────
 
